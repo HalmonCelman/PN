@@ -1,0 +1,8 @@
+*.atsln
+*.asmproj
+*.xml
+
+Debug
+Release
+.vs
+.vscode
