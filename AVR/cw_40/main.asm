@@ -2,6 +2,10 @@
 ; by KK
 ;
 
+;
+; by KK
+;
+
 ; const values
 .equ Digits_P=PORTB
 .equ Segments_P=PORTD
@@ -59,7 +63,7 @@ out DDRB, R20	; output
 ldi R20, 0x02	; PB1
 ldi R21, 0		; for clearing digits
 
-LOAD_CONST R25,R24,0x0005 ; 1/50 = 20 ms => 20ms/4 = 5ms delay <-- ****************** tutaj zmiana
+LOAD_CONST R25,R24,250 ; 1/1 = 1s => 1s/4 = 250ms delay <-- ****************** tutaj zmiana
 
 ; infinite loop
 MainLoop:
@@ -67,6 +71,12 @@ MainLoop:
 	SET_DIGIT 1
 	SET_DIGIT 2
 	SET_DIGIT 3
+
+	inc Digit_0
+	ldi R16, 10
+	cp Digit_0,R16
+	brne MainLoop
+	clr Digit_0
 	rjmp MainLoop
 
 ; subprograms

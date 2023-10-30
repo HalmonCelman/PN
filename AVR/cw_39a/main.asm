@@ -12,13 +12,19 @@ ldi @1,  low(@2)
 .equ Digits_P=PORTB
 .equ Segments_P=PORTD
 
-.equ Digit_0=9
-.equ Digit_1=8
-.equ Digit_2=7
-.equ Digit_3=6
+.def Digit_0=R2
+.def Digit_1=R3
+.def Digit_2=R4
+.def Digit_3=R5
 
-
-; main program
+ldi R16, 9
+mov R2, R16
+ldi R16, 8
+mov R3, R16
+ldi R16, 7
+mov R4, R16
+ldi R16, 6
+mov R5, R16
 
 ; const values
 ; digits on display
@@ -40,13 +46,13 @@ InfLoop:
 	out Digits_P, R20  ; digit on
 
 	sbic Digits_P, 1		; idk czemu ale w cwiczeniu chca na odwrot... 9137->7319
-	ldi R16, Digit_3
+		mov R16, Digit_3
 	sbic Digits_P, 2
-	ldi R16, Digit_2
+		mov R16, Digit_2
 	sbic Digits_P, 3
-	ldi R16, Digit_1
+		mov R16, Digit_1
 	sbic Digits_P, 4
-	ldi R16, Digit_0
+		mov R16, Digit_0
 
 	rcall DigitTo7segCode
 	out Segments_P,R16

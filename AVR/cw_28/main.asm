@@ -6,8 +6,7 @@ in R16,DDRB
 ori R16,0b00011110
 out DDRB,R16	; config as output
 mov R17,R16
-neg R17
-dec R17	; because neg is substracting from 256 not 255
+com R17
 InfLoop:
 	in R18,PORTB
 	or R18,R16

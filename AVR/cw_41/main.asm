@@ -2,6 +2,10 @@
 ; by KK
 ;
 
+;
+; by KK
+;
+
 ; const values
 .equ Digits_P=PORTB
 .equ Segments_P=PORTD
@@ -11,13 +15,13 @@
 .def Digit_2=R4
 .def Digit_3=R5
 
-ldi R16, 9
+ldi R16, 0
 mov R2, R16
-ldi R16, 8
+ldi R16, 0
 mov R3, R16
-ldi R16, 7
+ldi R16, 0
 mov R4, R16
-ldi R16, 6
+ldi R16, 0
 mov R5, R16
 
 ; macros
@@ -59,7 +63,7 @@ out DDRB, R20	; output
 ldi R20, 0x02	; PB1
 ldi R21, 0		; for clearing digits
 
-LOAD_CONST R25,R24,0x0005 ; 1/50 = 20 ms => 20ms/4 = 5ms delay <-- ****************** tutaj zmiana
+LOAD_CONST R25,R24,3 ; 1/100 = 10ms => 10ms/4 = 2,5ms delay ~ 3ms <-- ****************** tutaj zmiana
 
 ; infinite loop
 MainLoop:
@@ -67,6 +71,29 @@ MainLoop:
 	SET_DIGIT 1
 	SET_DIGIT 2
 	SET_DIGIT 3
+
+	inc Digit_0
+	ldi R16, 10
+	cp Digit_0, R16
+	brne MainLoop
+	clr Digit_0
+
+	inc Digit_1
+	cp Digit_1, R16
+	brne MainLoop
+	clr Digit_1
+	
+	inc Digit_2
+	cp Digit_2, R16
+	brne MainLoop
+	clr Digit_2
+
+	inc Digit_3
+	cp Digit_3, R16
+	brne EndOfLoop ; branch out of reach so we can use rjmp to jump there
+	clr Digit_3
+
+EndOfLoop:
 	rjmp MainLoop
 
 ; subprograms
