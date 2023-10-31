@@ -2,6 +2,54 @@
 ; by KK
 ;
 
+.cseg ; segment pamiêci kodu programu
+.org 0 rjmp _main ; skok do programu g³ównego
+.org OC1Aaddr rjmp _timer_isr ; skok do obs³ugi przerwania timera
+
+_timer_isr: ; procedura obs³ugi przerwania timera
+	push R16
+	push R17
+	push R18
+	push R19
+	push R26
+	push R27
+
+	; increment
+	mov R27, PulseEdgeCtrH	; prepare number for displaying
+	mov R26, PulseEdgeCtrL
+
+	adiw R27:R26,1
+
+	cpi R27, 3
+	brlo Display
+	cpi R26, 0xE8 ; 0x3E8 = 1000 in decimal
+	brlo Display
+	clr R27
+	clr R26
+
+	Display:
+	mov PulseEdgeCtrH, R27
+	mov PulseEdgeCtrL, R26
+
+	mov R17, PulseEdgeCtrH	; prepare number for displaying
+	mov R16, PulseEdgeCtrL
+
+	rcall NumberToDigits
+	
+	mov Digit_3, R16		; convert result to good format
+	mov Digit_2, R17
+	mov Digit_1, R18
+	mov Digit_0, R19
+
+
+	pop R27
+	pop R26
+	pop R19
+	pop R18
+	pop R17
+	pop R16
+	reti 
+
 ; const values
 .equ Digits_P=PORTB
 .equ Segments_P=PORTD
@@ -14,14 +62,6 @@
 .def PulseEdgeCtrL=R0
 .def PulseEdgeCtrH=R1
 
-ldi R16, 0
-mov R2, R16
-ldi R16, 0
-mov R3, R16
-ldi R16, 0
-mov R4, R16
-ldi R16, 0
-mov R5, R16
 
 ; macros
 .macro LOAD_CONST
@@ -52,7 +92,22 @@ mov R5, R16
 ; digits on display
 Data: .db 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F
 
-; main program
+
+_main:
+; timer init
+ldi R16, 0b00001100	; CTC, PSC=256
+out TCCR1B, R16
+
+ldi R16, 0x7A		; 8000000/256 = 31250 = 0x7A12
+out OCR1AH, R16 
+ldi R16, 0x12		
+out OCR1AL, R16 
+
+ldi R16, (1<<6)		; OCIE1A enable
+out TIMSK, R16
+
+sei					; interrupts on
+
 ; initialization
 ldi R20, 0x7F ; 0b01111111 - we dont need 1st bit
 out DDRD, R20
@@ -68,37 +123,12 @@ LOAD_CONST R27,R26,5 ; 0 at start
 
 ; infinite loop
 MainLoop:
-	mov PulseEdgeCtrH, R27
-	mov PulseEdgeCtrL, R26
-	mov R17, PulseEdgeCtrH	; prepare number for displaying
-	mov R16, PulseEdgeCtrL
-
-	rcall NumberToDigits
 	
-	mov Digit_3, R16		; convert result to good format
-	mov Digit_2, R17
-	mov Digit_1, R18
-	mov Digit_0, R19
-
 	SET_DIGIT 0
 	SET_DIGIT 1
 	SET_DIGIT 2
 	SET_DIGIT 3
 
-	mov R27, PulseEdgeCtrH	; prepare number for displaying
-	mov R26, PulseEdgeCtrL
-
-	adiw R27:R26,1
-	cpi R27, 3	; sadze ze chodzilo o modulo z 10000 a nie z 1000 ale w zadaniu jest 1000 to robie 1000
-	brlo EndOfLoop
-	cpi R26, 0xE8 ; 0x3E8 = 1000 in decimal
-	brlo EndOfLoop
-	clr R27
-	clr R26
-
-	
-
-	EndOfLoop:
 	rjmp MainLoop
 
 ; subprograms

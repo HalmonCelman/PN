@@ -2,6 +2,80 @@
 ; by KK
 ;
 
+.cseg ; segment pamiêci kodu programu
+.org 0 rjmp _main				; skok do programu g³ównego
+.org OC1Aaddr rjmp _timer_isr	; skok do obs³ugi przerwania timera
+.org 0x0B rjmp _pcint0_isr		; PCINT0 - as in datasheet in interrupt vectors
+
+; krotkie wytlumaczenie - kiedy w jakims momencie glowny program zostaje przerwany to powinno sie zapisac rowniez flagi
+; ktore byly w tym momencie ustawione bo moze pozniej np nie nastapic skok ktory powinien nastapic
+;	przyklad:
+;	ldi R16,255
+;   addi R16,1	-> flaga carry ustawiona
+;	<--- tu nastepuje przerwanie ktore nie zapisuje SREG i w rezultacie zeruje flage carry --->
+;	brcs gdzies	-> bez przerwania powinno skoczyc do etykiety gdzies, ale przez przerwanie nie skacze
+;
+; poniewaz im wieksza czestotliwosc tym czesciej jest przerwanie to ten efekt byl bardziej widoczny przy duzych czestotliwosciach
+; przejawial sie np tym ze wyswietlana byla tylko jedna cyfra - ktora nie byla tez za bardzo odswierzana
+
+_pcint0_isr:
+	push R26
+	push R27
+
+	in R27,SREG	; save flags
+	push R27
+	; increment
+	mov R27, PulseEdgeCtrH	; prepare number for displaying
+	mov R26, PulseEdgeCtrL
+
+	adiw R27:R26,1
+
+	cpi R27, 3
+	brlo EndOfInterrupt
+	cpi R26, 0xE8 ; 0x3E8 = 1000 in decimal
+	brlo EndOfInterrupt
+	clr R27
+	clr R26
+
+	EndOfInterrupt:
+	mov PulseEdgeCtrH, R27
+	mov PulseEdgeCtrL, R26
+
+	pop R27
+	out SREG, R27	; restore flags
+
+	pop R27
+	pop R26
+	reti
+
+_timer_isr: ; procedura obs³ugi przerwania timera
+	push R16
+	push R17
+	push R18
+	push R19
+	
+	in R19,SREG	; save flags
+	push R19
+
+	mov R17, PulseEdgeCtrH	; prepare number for displaying
+	mov R16, PulseEdgeCtrL
+
+	rcall NumberToDigits
+	
+	mov Digit_3, R16		; convert result to good format
+	mov Digit_2, R17
+	mov Digit_1, R18
+	mov Digit_0, R19
+	
+	pop R19
+	out SREG, R19 ; restore flags
+
+	pop R19
+	pop R18
+	pop R17
+	pop R16
+	reti 
+
 ; const values
 .equ Digits_P=PORTB
 .equ Segments_P=PORTD
@@ -14,14 +88,6 @@
 .def PulseEdgeCtrL=R0
 .def PulseEdgeCtrH=R1
 
-ldi R16, 0
-mov R2, R16
-ldi R16, 0
-mov R3, R16
-ldi R16, 0
-mov R4, R16
-ldi R16, 0
-mov R5, R16
 
 ; macros
 .macro LOAD_CONST
@@ -32,7 +98,10 @@ mov R5, R16
 .macro SET_DIGIT
 	rcall DelayInMs
 
+	in R19, Digits_P
+	andi R19,1
 	ldi R20,(2<<@0)
+	or R20,R19
 	out Digits_P, R20  ; digit on
 
 	sbic Digits_P, 1		; idk czemu ale w cwiczeniu chca na odwrot... 9137->7319
@@ -52,7 +121,28 @@ mov R5, R16
 ; digits on display
 Data: .db 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F
 
-; main program
+
+_main:
+ldi R16, (1<<5)		; PCIE0 enable
+out GIMSK, R16
+
+ldi R16, 1		; PCINT0 enable
+out PCMSK0, R16
+
+; timer init
+ldi R16, 0b00001100	; CTC, PSC=256
+out TCCR1B, R16
+
+ldi R16, 0x7A		; 8000000/256 = 31250 = 0x7A12
+out OCR1AH, R16 
+ldi R16, 0x12		
+out OCR1AL, R16 
+
+ldi R16, (1<<6)		; OCIE1A enable
+out TIMSK, R16
+
+sei					; interrupts on
+
 ; initialization
 ldi R20, 0x7F ; 0b01111111 - we dont need 1st bit
 out DDRD, R20
@@ -62,43 +152,16 @@ out DDRB, R20	; output
 ldi R20, 0x02	; PB1
 ldi R21, 0		; for clearing digits
 
-LOAD_CONST R25,R24,5 ; 50Hz
-
 LOAD_CONST R27,R26,5 ; 0 at start
-
+LOAD_CONST R25,R24,5 ; 50Hz
 ; infinite loop
 MainLoop:
-	mov PulseEdgeCtrH, R27
-	mov PulseEdgeCtrL, R26
-	mov R17, PulseEdgeCtrH	; prepare number for displaying
-	mov R16, PulseEdgeCtrL
-
-	rcall NumberToDigits
 	
-	mov Digit_3, R16		; convert result to good format
-	mov Digit_2, R17
-	mov Digit_1, R18
-	mov Digit_0, R19
-
 	SET_DIGIT 0
 	SET_DIGIT 1
 	SET_DIGIT 2
 	SET_DIGIT 3
 
-	mov R27, PulseEdgeCtrH	; prepare number for displaying
-	mov R26, PulseEdgeCtrL
-
-	adiw R27:R26,1
-	cpi R27, 3	; sadze ze chodzilo o modulo z 10000 a nie z 1000 ale w zadaniu jest 1000 to robie 1000
-	brlo EndOfLoop
-	cpi R26, 0xE8 ; 0x3E8 = 1000 in decimal
-	brlo EndOfLoop
-	clr R27
-	clr R26
-
-	
-
-	EndOfLoop:
 	rjmp MainLoop
 
 ; subprograms

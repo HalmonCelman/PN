@@ -2,6 +2,14 @@
 ; by KK
 ;
 
+.cseg ; segment pamiêci kodu programu
+.org 0 rjmp _main ; skok do programu g³ównego
+.org OC1Aaddr rjmp _timer_isr ; skok do obs³ugi przerwania timera
+
+_timer_isr: ; procedura obs³ugi przerwania timera
+	inc R0 ; jakiœ kod
+	reti ; powrót z procedury obs³ugi przerwania (reti zamiast ret)
+
 ; const values
 .equ Digits_P=PORTB
 .equ Segments_P=PORTD
@@ -14,14 +22,18 @@
 .def PulseEdgeCtrL=R0
 .def PulseEdgeCtrH=R1
 
-ldi R16, 0
-mov R2, R16
-ldi R16, 0
-mov R3, R16
-ldi R16, 0
-mov R4, R16
-ldi R16, 0
-mov R5, R16
+_main:
+; timer init
+ldi R16, 0b00001100	; CTC, PSC=256
+out TCCR1B, R16
+
+ldi R16, 100		; 100 => 256(PSC) * 100 = 25600 cycles
+out OCR1AL, R16 
+
+ldi R16, (1<<6)		; OCIE1A enable
+out TIMSK, R16
+
+sei					; interrupts on
 
 ; macros
 .macro LOAD_CONST
@@ -89,14 +101,13 @@ MainLoop:
 	mov R26, PulseEdgeCtrL
 
 	adiw R27:R26,1
-	cpi R27, 3	; sadze ze chodzilo o modulo z 10000 a nie z 1000 ale w zadaniu jest 1000 to robie 1000
-	brlo EndOfLoop
+
+	cpi R27, 3
+	brlo EndOfInterrupt
 	cpi R26, 0xE8 ; 0x3E8 = 1000 in decimal
-	brlo EndOfLoop
+	brlo EndOfInterrupt
 	clr R27
 	clr R26
-
-	
 
 	EndOfLoop:
 	rjmp MainLoop

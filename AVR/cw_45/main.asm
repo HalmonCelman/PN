@@ -2,6 +2,13 @@
 ; by KK
 ;
 
+.cseg ; segment pamiêci kodu programu
+.org 0 rjmp _main ; skok do programu g³ównego
+.org OC1Aaddr rjmp _timer_isr ; skok do obs³ugi przerwania timera
+_timer_isr: ; procedura obs³ugi przerwania timera
+inc R0 ; jakiœ kod
+reti ; powrót z procedury obs³ugi przerwania (reti zamiast ret)
+
 ; const values
 .equ Digits_P=PORTB
 .equ Segments_P=PORTD
@@ -14,6 +21,7 @@
 .def PulseEdgeCtrL=R0
 .def PulseEdgeCtrH=R1
 
+_main:
 ldi R16, 0
 mov R2, R16
 ldi R16, 0
