@@ -1,8 +1,30 @@
+# Atmel studio
 *.atsln
 *.asmproj
 *.xml
 
-Debug
-Release
+# Keil uVision
+*.d
+*.lst
+*.o
+*.axf
+*.hex
+*.htm
+*.lnp
+*.txt
+*.plg
+*.sct
+*.uvgui*
+*.bak
+*.uvopt
+*.uvproj
+*.dep
+*.map
+
+# vscode
 .vs
 .vscode
+
+Debug
+Release
+
