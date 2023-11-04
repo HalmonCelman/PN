@@ -11,7 +11,7 @@ __use_two_region_memory
 	EXPORT			__use_two_region_memory
 	
 	ldr R0, =1
-	ldr R1, =3000
+	ldr R1, =15000	; 60Hz/4cycles = 15000
 	
 	mul R2,R1,R0
 	

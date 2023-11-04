@@ -17,7 +17,7 @@ main_loop
 	
 	; subprograms
 delay_in_ms
-	ldr R1, =3000
+	ldr R1, =15000
 	mul R2,R1,R0
 delay_loop
 	subs R2, #1

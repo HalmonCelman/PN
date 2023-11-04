@@ -10,6 +10,8 @@ __use_two_region_memory
 	EXPORT			__main
 	EXPORT			__use_two_region_memory
 	
+CURRENT_DIGIT rn R12
+	
 	ldr R4, =IO0DIR
 	ldr R5, =0x000F0000	; piny 16-19 port 0
 	str R5, [R4]
@@ -22,13 +24,33 @@ __use_two_region_memory
 	ldr R5, =0x003F0000	; let's display '0'
 	str R5, [R4]
 	
-	ldr R4, =IO0SET		; digit on
-	ldr R5, =0x00010000	; on first digit
+	ldr CURRENT_DIGIT, =0 ; first digit
+	
+	; main_loop:
+main_loop
+	; IO0CLR = 0xf0000 // wygaszenie wszystkich wyswietlaczy
+	ldr R4, =IO0CLR		
+	ldr R5, =0x0F0000
 	str R5, [R4]
 	
-main_loop
-	ldr R0,=3
+	; IO0SET = 0x80000 >> CURRENT_DIGIT
+	ldr R4, =IO0SET	
+	ldr R5, =0x80000
+	mov R5, R5,lsr CURRENT_DIGIT
+	str R5, [R4]
+	
+	; CURRENT_DIGIT = (CURRENT_DIGIT+1)%4 // inkrementacja licznika cyfr,
+	add CURRENT_DIGIT, #1
+	cmp CURRENT_DIGIT, #4
+	ldrhs CURRENT_DIGIT, =0
+	
+	; R0=500; // op�znienie
+	ldr R0,=500
+	
+	; Delay(R0)
 	bl delay_in_ms
+	
+	; jmp main_loop
 	b main_loop
 	
 	; subprograms
