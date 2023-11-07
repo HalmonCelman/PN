@@ -26,8 +26,7 @@ InfLoop:
 	out PORTB, R20  ; digit on
 	out PORTD,R18
 	rcall DelayInMs
-	clc	; because we want to rol without carry
-	rol R20
+	lsl R20
 	cpi R20,0x20 ; if is > than PB4
 	brlo InfLoop
 	ldi R20, 0x02 ; than start from 1st one

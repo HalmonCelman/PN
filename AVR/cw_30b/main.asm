@@ -29,8 +29,7 @@ InfLoop:
 	out Digits_P, R20  ; digit on
 	out Segments_P,R18
 	rcall DelayInMs
-	clc	; because we want to rol without carry
-	rol R20
+	lsl R20
 	cpi R20,0x20 ; if is > than PB4
 	brlo InfLoop
 	ldi R20, 0x02 ; than start from 1st one
