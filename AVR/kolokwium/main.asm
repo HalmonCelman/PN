@@ -20,21 +20,10 @@
 
 ; SET_DIGIT diplay digit of a number given in macro argument, example: SET_DIGIT 2
 .MACRO SET_DIGIT  
-	LOAD_CONST R16, R17, DisplayRefreshPeriod
 	rcall DealyInMs
-
 	ldi R16, (2<<@0)
 	out DigitsPort, R16
-
-	sbic DigitsPort, 1
-		mov R16, Dig_0
-	sbic DigitsPort, 2
-		mov R16, Dig_1
-	sbic DigitsPort, 3
-		mov R16, Dig_2
-	sbic DigitsPort, 4
-		mov R16, Dig_3
-
+	mov R16, Dig_@0
 	rcall DigitTo7segCode
 	out SegmentsPort, R16
 .ENDMACRO 
@@ -136,10 +125,6 @@ _main:
 	
 	ldi R16, (1<<6)
 	out TIMSK, R16
-
-	;---  Display  ---
-	LOAD_CONST R16,R17,1234
-	rcall _NumberToDigits
 	; --- enable gloabl interrupts
 	sei
 
@@ -291,7 +276,7 @@ ret
 DealyInMs:  
             push R24
 			push R25
-
+			LOAD_CONST R16, R17, DisplayRefreshPeriod
 			DelayLoop:
 				rcall OneMsLoop
 				dec R16
