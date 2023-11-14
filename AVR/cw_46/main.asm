@@ -103,9 +103,9 @@ MainLoop:
 	adiw R27:R26,1
 
 	cpi R27, 3
-	brlo EndOfInterrupt
+	brlo EndOfLoop
 	cpi R26, 0xE8 ; 0x3E8 = 1000 in decimal
-	brlo EndOfInterrupt
+	brlo EndOfLoop
 	clr R27
 	clr R26
 
