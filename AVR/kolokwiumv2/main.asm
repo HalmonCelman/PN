@@ -261,7 +261,7 @@ DealyInMs:
 
             mov R24, R16
 			mov R25, R17
-			dec R16
+
 	DelayLoop:
 			rcall OneMsLoop
 			sbiw R25:R24, 1
